@@ -1,0 +1,10 @@
+$ arm-none-eabi-gdb
+(gdb) target sim
+(gdb) load kernel.elf
+(gdb) file kernel.elf
+(gdb) break main
+(gdb) run
+(gdb) disassemble
+(gdb) stepi
+(gdb) info registers
+
