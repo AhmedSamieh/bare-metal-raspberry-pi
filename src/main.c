@@ -18,7 +18,3 @@ void main()
         }
     }
 }
-void _start()
-{
-    main();
-}
