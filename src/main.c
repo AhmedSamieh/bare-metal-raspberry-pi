@@ -2,7 +2,6 @@
 #include "timer.h"
 #include "gpio.h"
 
-int main() __attribute__((section(".text.startup")));
 int main()
 {
     uint8_t pwr_status = 0, act_status = 0;

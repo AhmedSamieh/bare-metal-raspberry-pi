@@ -7,7 +7,7 @@
 #include <stdint.h>
 #include "rpibplus.h"
 
-volatile uint32_t *const g_gpio_address = (uint32_t *)GPIO_BASE;
+volatile uint32_t *g_gpio_address = (uint32_t *)GPIO_BASE;
 void gpio_set_function(uint8_t pin_number, uint8_t function)
 {
     /* each pin use 3 bits, word used to store 10 pins */
