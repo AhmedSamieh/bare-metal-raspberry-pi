@@ -4,6 +4,8 @@
  *
  * gpio.h contains the functions for manipulation of the GPIO ports.
  ******************************************************************************/
+#include <stdint.h>
+
 /* GPIO FUNCTION */
 #define GPIO_INPUT  (0)
 #define GPIO_OUTPUT (1)
@@ -16,6 +18,6 @@
 #define GPIO_PWR    (35)
 #define GPIO_ACT    (47)
 
-void gpio_set_function(int pin_number, int function);
-void gpio_set(int pin_number, int value);
-int  gpio_get(int pin_number);
+void gpio_set_function(uint8_t pin_number, uint8_t function);
+void gpio_set(uint8_t pin_number, uint8_t value);
+uint8_t  gpio_get(uint8_t pin_number);

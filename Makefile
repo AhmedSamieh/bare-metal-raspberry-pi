@@ -1,16 +1,15 @@
 # By Ahmed Samieh
 ARMGNU     = arm-none-eabi
 SOURCE     = src/
-BUILD      = obj/
-# get object file name from c file name)
-OBJECTS    = $(patsubst $(SOURCE)%.c,$(BUILD)%.o,$(wildcard $(SOURCE)*.c))
+# get object file name from c file name
+OBJECTS    = $(patsubst %.c,%.o,$(wildcard $(SOURCE)*.c))
 TARGET     = kernel
 # arm-none-eabi-gcc --help > gcc.help
-GCC_OPTION = -O2 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -nostartfiles -g -Wall
+GCC_OPTION = -O1 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -nostartfiles -g -Wall
 # arm-none-eabi-ld --help > ld.help
 LD_OPTION  = -e main -N -O --relax --gc-sections --verbose
 
-all: $(TARGET).img $(TARGET).list $(TARGET).nm
+all: $(TARGET).nm $(TARGET).list $(TARGET).img
 
 # NOTE:
 #       $@ the left side of the :
@@ -29,12 +28,9 @@ $(TARGET).nm: $(TARGET).elf
 $(TARGET).elf: $(OBJECTS)
 	$(ARMGNU)-ld $(LD_OPTION) $^ -Map $(TARGET).map -o $@ > $(TARGET).ld
 
-$(BUILD)%.o: $(SOURCE)%.c $(BUILD)
+%.o: %.c
 	$(ARMGNU)-gcc $(GCC_OPTION) -c $< -o $@
 
-$(BUILD):
-	mkdir $@
-
 clean:
-	rm -rf $(BUILD) $(TARGET).*
+	rm -rf $(OBJECTS) $(TARGET).*
 

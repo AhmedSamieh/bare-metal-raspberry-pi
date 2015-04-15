@@ -1,20 +1,26 @@
-#include "gpio.h"
+#include <stdint.h>
 #include "timer.h"
+#include "gpio.h"
 
-void main()
+int main() __attribute__((section(".text.startup")));
+int main()
 {
-    unsigned char pattern = 0b00010001;
-    int status = 0;
+    uint8_t pwr_status = 0, act_status = 0;
+    uint8_t i;
+
     gpio_set_function(GPIO_PWR, GPIO_OUTPUT);
     gpio_set_function(GPIO_ACT, GPIO_OUTPUT);
+    gpio_set(GPIO_PWR, GPIO_OFF);
+    gpio_set(GPIO_ACT, GPIO_OFF);
+    usleep(2 * 1000 * 1000);
     while (1)
     {
-        int i;
-        gpio_set(GPIO_ACT, (status ^= 1) ? GPIO_ON : GPIO_OFF);
-        for (i = 0; i < 8; i++)
+        gpio_set(GPIO_PWR, (pwr_status ^= GPIO_ON));
+        for (i = 0; i < 20; i++)
         {
-            gpio_set(GPIO_PWR, (pattern & (1 << i)) ? GPIO_ON : GPIO_OFF);
-            usleep(1000 * 1000);
+            gpio_set(GPIO_ACT, (act_status ^= GPIO_ON));
+            usleep(50 * 1000);
         }
     }
 }
+
