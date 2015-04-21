@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include "rpibplus.h"
 
-volatile uint32_t *g_system_timer_address = (uint32_t *)TIMER_BASE;
+volatile uint32_t *g_system_timer_address = (uint32_t *)SYSTEM_TIMER_BASE;
 uint64_t get_system_time()
 {
     return *((volatile uint64_t *)(g_system_timer_address + 1));

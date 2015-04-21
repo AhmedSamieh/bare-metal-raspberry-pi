@@ -4,22 +4,27 @@
 
 int main()
 {
-    uint8_t pwr_status = 0, act_status = 0;
-    uint8_t i;
-
-    gpio_set_function(GPIO_PWR, GPIO_OUTPUT);
-    gpio_set_function(GPIO_ACT, GPIO_OUTPUT);
-    gpio_set(GPIO_PWR, GPIO_OFF);
-    gpio_set(GPIO_ACT, GPIO_OFF);
-    usleep(2 * 1000 * 1000);
-    while (1)
-    {
-        gpio_set(GPIO_PWR, (pwr_status ^= GPIO_ON));
-        for (i = 0; i < 20; i++)
-        {
-            gpio_set(GPIO_ACT, (act_status ^= GPIO_ON));
-            usleep(50 * 1000);
-        }
-    }
+    /*gpio_set_function(GPIO_PWR, GPIO_OUTPUT);*/
+    asm("mov r0, #35");
+    asm("mov r1, #1");
+    asm("bl gpio_set_function");
+    /*gpio_set_function(GPIO_ACT, GPIO_OUTPUT);*/
+    asm("mov r0, #47");
+    asm("mov r1, #1");
+    asm("bl gpio_set_function");
+    /* turn on ACT if we are in System Mode, if not turn it OFF */
+    asm("loop: mrs r0, cpsr");
+    asm("and r0, r0, #0x1f");
+    asm("cmp r0, #0x1f");
+    asm("bne clear");
+    /*gpio_set(GPIO_ACT, GPIO_ON);*/
+    asm("mov r0, #47");
+    asm("mov r1, #1");
+    asm("bl gpio_set");
+    asm("b done");
+    /*gpio_set(GPIO_ACT, GPIO_OFF);*/
+    asm("clear: mov r0, #47");
+    asm("mov r1, #0");
+    asm("bl gpio_set");
+    asm("done: b loop");
 }
-
