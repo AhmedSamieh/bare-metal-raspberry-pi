@@ -18,7 +18,8 @@ extern uint32_t __bss_end__;
 
 volatile uint32_t *g_interrupt_controller_address = (uint32_t *)INTERRUPT_CONTROLLER_BASE;
 volatile uint32_t *g_timer_address = (uint32_t *)TIMER_BASE;
-uint32_t g_task_id = 0;
+uint32_t g_task[2];
+uint32_t g_task_id = 1;
 void __attribute__((section(".text.startup"))) _start(void)
 {
     uint32_t *bss     = &__bss_start__;
@@ -40,7 +41,9 @@ void __attribute__((section(".text.startup"))) _start(void)
     asm volatile ("unused_handler_address: .word reset_vector");
     asm volatile ("interrupt_vector_address: .word interrupt_vector");
     asm volatile ("fast_interrupt_vector_address: .word fast_interrupt_vector");
-    asm volatile ("reset_vector: mov r0, #0x8000");
+    /* reset vector */
+    asm volatile ("reset_vector: mov sp, #0x6000");
+    asm volatile ("mov r0, #0x8000");
     asm volatile ("mov r1, #0x0000");
     asm volatile ("ldmia r0!,{r2, r3, r4, r5, r6, r7, r8, r9}");
     asm volatile ("stmia r1!,{r2, r3, r4, r5, r6, r7, r8, r9}");
@@ -53,42 +56,120 @@ void __attribute__((section(".text.startup"))) _start(void)
     /* Enable the timer interrupt IRQ */
     *((volatile uint32_t *)(g_interrupt_controller_address + 6)) = TIMER_IRQ;
     /* Setup the system timer interrupt */
-    /* Timer frequency = Clk/256 * 0x1000 */
-    *((volatile uint32_t *)(g_timer_address + 0)) = 0x1000; /* Load */
+    /* Timer frequency = Clk/256 * 0x100 */
+    *((volatile uint32_t *)(g_timer_address + 0)) = 0x100; /* Load */
     *((volatile uint32_t *)(g_timer_address + 2)) = TIMER_CTRL_23BIT |
                                                     TIMER_CTRL_PRESCALE_256 |
                                                     TIMER_CTRL_INT_ENABLE |
                                                     TIMER_CTRL_ENABLE; /* Cotrol */
     /* Switch to System Mode - b11111 */
     asm volatile ("cps #0x1F");
-    /* set sp on system mode */
+    /* IRQ enable */
+    /*asm volatile ("cpsie i");*/
+
+    /* setup task0 */
+    asm volatile ("mov sp, #0x7000");
+    /* push r0-r12, lr, spsr, (pc+4) into stack */
+    asm volatile ("mov r0, #0");
+    asm volatile ("push {r0}"); /* r0 */
+    asm volatile ("push {r0}"); /* r1 */
+    asm volatile ("push {r0}"); /* r2 */
+    asm volatile ("push {r0}"); /* r3 */
+    asm volatile ("push {r0}"); /* r4 */
+    asm volatile ("push {r0}"); /* r5 */
+    asm volatile ("push {r0}"); /* r6 */
+    asm volatile ("push {r0}"); /* r7 */
+    asm volatile ("push {r0}"); /* r8 */
+    asm volatile ("push {r0}"); /* r9 */
+    asm volatile ("push {r0}"); /* r10 */
+    asm volatile ("push {r0}"); /* r11 */
+    asm volatile ("push {r0}"); /* r12 */
+    asm volatile ("push {r0}"); /* lr */
+    asm volatile ("bic r0, r0, #0x80"); /* clear bit 7 in Program Status Register to enable IRQ */
+    asm volatile ("ldr r1, =task0");
+    asm volatile ("add r1, r1, #4");
+    asm volatile ("push {r0, r1}"); /* spsr, pc + 4 */
+    asm volatile ("mov %0, sp" : "=r" (g_task[0]));
+
+    /* setup task1 */
     asm volatile ("mov sp, #0x8000");
-    /* clear bit 7 in Program Status Register to enable global interrupts */
-    /* IRQ enable*/
-    asm volatile ("cpsie i");
+    /* push r0-r12, lr, spsr, (pc+4) into stack */
+    asm volatile ("mov r0, #0");
+    asm volatile ("push {r0}"); /* r0 */
+    asm volatile ("push {r0}"); /* r1 */
+    asm volatile ("push {r0}"); /* r2 */
+    asm volatile ("push {r0}"); /* r3 */
+    asm volatile ("push {r0}"); /* r4 */
+    asm volatile ("push {r0}"); /* r5 */
+    asm volatile ("push {r0}"); /* r6 */
+    asm volatile ("push {r0}"); /* r7 */
+    asm volatile ("push {r0}"); /* r8 */
+    asm volatile ("push {r0}"); /* r9 */
+    asm volatile ("push {r0}"); /* r10 */
+    asm volatile ("push {r0}"); /* r11 */
+    asm volatile ("push {r0}"); /* r12 */
+    asm volatile ("push {r0}"); /* lr */
+    asm volatile ("bic r0, r0, #0x80"); /* clear bit 7 in Program Status Register to enable IRQ */
+    asm volatile ("ldr r1, =task1");
+    asm volatile ("add r1, r1, #4");
+    asm volatile ("push {r0, r1}"); /* spsr, pc+4 */
+    asm volatile ("mov %0, sp" : "=r" (g_task[1]));
+
     asm volatile ("b main_task");
     while (1);
 }
 void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
 {
-    while( 1 )
-    {
-    }
+    while (1);
 }
 void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
 {
+    while (1);
 }
 void __attribute__((interrupt("ABORT"))) instruction_fetch_memory_abort_vector(void)
 {
+    while (1);
 }
 void __attribute__((interrupt("ABORT"))) data_access_memory_abort_vector(void)
 {
+    while (1);
 }
 void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
 {
-    *((volatile uint32_t *)(g_timer_address + 3)) = 1;
-    gpio_set(GPIO_PWR, (g_task_id ^= GPIO_ON));
-    gpio_set(GPIO_ACT, GPIO_OFF);
+    /* save running task context */
+    asm volatile ("cps #0x1F");          /* switch to system mode */
+    asm volatile ("push {r0-r12,lr}");   /* push context registers into task stack */
+    asm volatile ("cps #0x12");          /* switch to IRQ mode */
+    asm volatile ("mrs r0, spsr");       /* copy system mode cpsr from irq mode spsr */
+    asm volatile ("mov r1, lr");         /* copy lr (system mode pc + 4) */
+    asm volatile ("cps #0x1F");          /* switch to system mode */
+    asm volatile ("push {r0, r1}");      /* push context cpsr and (pc + 4) into task stack */
+
+    /* save task sp into g_task and load another task sp */
+    asm volatile ("ldr r0, =g_task");
+    asm volatile ("ldr r1, =g_task_id");
+    asm volatile ("ldr r2, [r1]");
+    asm volatile ("str sp, [r0, r2, lsl #2]");
+    asm volatile ("eor r2, r2, #1");
+    asm volatile ("ldr sp, [r0, r2, lsl #2]");
+    asm volatile ("str r2, [r1]");
+
+    /* load address of g_timer_address pointer into r0 */
+    asm volatile ("ldr r0, =g_timer_address");
+    /* load g_timer_address pointer into r0 */
+    asm volatile ("ldr r0, [r0]");
+    asm volatile ("mov r1, #1");
+    asm volatile ("str r1, [r0, #12]");
+
+    asm volatile ("pop {r0, r1}");       /* pop context (pc + 4) from task stack */
+    asm volatile ("cps #0x12");          /* switch to IRQ mode */
+    asm volatile ("msr spsr, r0");
+    asm volatile ("mov lr, r1");         /* restore lr (system mode pc + 4) */
+    asm volatile ("cps #0x1F");          /* switch to system mode */
+    /* restore task status r0-r12, lr*/
+    asm volatile ("pop {r0-r12,lr}");
+    /* switch to IRQ mode */
+    asm volatile ("cps #0x12");
 }
 void __attribute__((interrupt("FIQ"))) fast_interrupt_vector(void)
 {
