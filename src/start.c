@@ -19,8 +19,8 @@ extern uint32_t __bss_end__;
 volatile uint32_t *g_interrupt_controller_address = (uint32_t *)INTERRUPT_CONTROLLER_BASE;
 volatile uint32_t *g_timer_address = (uint32_t *)TIMER_BASE;
 uint32_t g_task[2];
-uint32_t g_task_id = 1;
-void __attribute__((section(".text.startup"))) _start(void)
+uint32_t g_task_id = 0;
+void __attribute__((naked, section(".text.startup"))) _start(void)
 {
     uint32_t *bss     = &__bss_start__;
     uint32_t *bss_end = &__bss_end__;
@@ -118,23 +118,23 @@ void __attribute__((section(".text.startup"))) _start(void)
     asm volatile ("b main_task");
     while (1);
 }
-void __attribute__((interrupt("UNDEF"))) undefined_instruction_vector(void)
+void __attribute__((naked)) undefined_instruction_vector(void)
 {
     while (1);
 }
-void __attribute__((interrupt("SWI"))) software_interrupt_vector(void)
+void __attribute__((naked)) software_interrupt_vector(void)
 {
     while (1);
 }
-void __attribute__((interrupt("ABORT"))) instruction_fetch_memory_abort_vector(void)
+void __attribute__((naked)) instruction_fetch_memory_abort_vector(void)
 {
     while (1);
 }
-void __attribute__((interrupt("ABORT"))) data_access_memory_abort_vector(void)
+void __attribute__((naked)) data_access_memory_abort_vector(void)
 {
     while (1);
 }
-void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
+void __attribute__((naked)) interrupt_vector(void)
 {
     /* save running task context */
     asm volatile ("cps #0x1F");          /* switch to system mode */
@@ -170,7 +170,9 @@ void __attribute__((interrupt("IRQ"))) interrupt_vector(void)
     asm volatile ("pop {r0-r12,lr}");
     /* switch to IRQ mode */
     asm volatile ("cps #0x12");
+    asm volatile ("subs pc, lr, #4");
 }
-void __attribute__((interrupt("FIQ"))) fast_interrupt_vector(void)
+void __attribute__((naked)) fast_interrupt_vector(void)
 {
+    while (1);
 }
