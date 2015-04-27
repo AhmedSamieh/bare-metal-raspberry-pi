@@ -2,10 +2,6 @@
 #include "rpibplus.h"
 #include "gpio.h"
 
-/* __bss_start__ and __bss_end__ are defined in the linker script */
-extern uint32_t __bss_start__;
-extern uint32_t __bss_end__;
-
 /* BCM2835 ARM Peripherals manual, section 7.5 */
 
 #define TIMER_IRQ (1)
@@ -18,12 +14,10 @@ extern uint32_t __bss_end__;
 
 volatile uint32_t *g_interrupt_controller_address = (uint32_t *)INTERRUPT_CONTROLLER_BASE;
 volatile uint32_t *g_timer_address = (uint32_t *)TIMER_BASE;
-uint32_t g_task[2];
+uint32_t g_task[2] = {0};
 uint32_t g_task_id = 0;
 void __attribute__((naked, section(".text.startup"))) _start(void)
 {
-    uint32_t *bss     = &__bss_start__;
-    uint32_t *bss_end = &__bss_end__;
     /* Supervisor Mode - b10011 */
     asm volatile ("ldr pc, reset_vector_address");
     asm volatile ("ldr pc, undefined_instruction_vector_address");
@@ -42,17 +36,23 @@ void __attribute__((naked, section(".text.startup"))) _start(void)
     asm volatile ("interrupt_vector_address: .word interrupt_vector");
     asm volatile ("fast_interrupt_vector_address: .word fast_interrupt_vector");
     /* reset vector */
-    asm volatile ("reset_vector: mov sp, #0x6000");
+    asm volatile ("reset_vector: mov sp, #0x5000");
     asm volatile ("mov r0, #0x8000");
     asm volatile ("mov r1, #0x0000");
     asm volatile ("ldmia r0!,{r2, r3, r4, r5, r6, r7, r8, r9}");
     asm volatile ("stmia r1!,{r2, r3, r4, r5, r6, r7, r8, r9}");
     asm volatile ("ldmia r0!,{r2, r3, r4, r5, r6, r7, r8, r9}");
     asm volatile ("stmia r1!,{r2, r3, r4, r5, r6, r7, r8, r9}");
-    while (bss < bss_end)
-    {
-        *bss++ = 0;
-    }
+    /* zero init bss section */
+    asm volatile ("mov r0, #0");
+    /* __bss_start__ and __bss_end__ are defined in the linker script */
+    asm volatile ("ldr r1, =__bss_start__");
+    asm volatile ("ldr r2, =__bss_end__");
+    asm volatile ("b bss_test");
+    asm volatile ("zero_init: str r0, [r1]");
+    asm volatile ("add r1, #4");
+    asm volatile ("bss_test: cmp r1, r2");
+    asm volatile ("bne zero_init");
     /* Enable the timer interrupt IRQ */
     *((volatile uint32_t *)(g_interrupt_controller_address + 6)) = TIMER_IRQ;
     /* Setup the system timer interrupt */
@@ -64,8 +64,9 @@ void __attribute__((naked, section(".text.startup"))) _start(void)
                                                     TIMER_CTRL_ENABLE; /* Cotrol */
     /* Switch to System Mode - b11111 */
     asm volatile ("cps #0x1F");
-    /* IRQ enable */
-    /*asm volatile ("cpsie i");*/
+    /*asm volatile ("mrs r0, cpsr");
+    asm volatile ("orr r0, r0, #0x1F");
+    asm volatile ("msr cpsr, r0");*/
 
     /* setup task0 */
     asm volatile ("mov sp, #0x7000");
@@ -115,6 +116,7 @@ void __attribute__((naked, section(".text.startup"))) _start(void)
     asm volatile ("push {r0, r1}"); /* spsr, pc+4 */
     asm volatile ("mov %0, sp" : "=r" (g_task[1]));
 
+    asm volatile ("mov sp, #0x6000");
     asm volatile ("b main_task");
     while (1);
 }

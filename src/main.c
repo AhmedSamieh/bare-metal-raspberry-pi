@@ -35,7 +35,7 @@ void main_task()
     asm volatile ("ldr r0, =g_task");
     asm volatile ("ldr r1, =g_task_id");
     asm volatile ("ldr r2, [r1]");
-    asm volatile ("str sp, [r0, r2, lsl #2]");
+    asm volatile ("ldr sp, [r0, r2, lsl #2]");
 
     asm volatile ("pop {r0, r1}");
     asm volatile ("msr cpsr, r0");
