@@ -1,14 +1,15 @@
 /******************************************************************************
  * gpio.c
- *  by Ahmed Samieh
+ *  auther  Ahmed Samieh
+ *  email   ahmed.samieh@gmail.com
  *
  * gpio.c contains the functions for manipulation of the GPIO ports.
  ******************************************************************************/
 #include <stdint.h>
 #include "rpibplus.h"
 
-volatile uint32_t *g_gpio_address = (uint32_t *)GPIO_BASE;
-void gpio_set_function(uint8_t pin_number, uint8_t function)
+volatile uint32_t * const g_gpio_address = (uint32_t * const)GPIO_BASE;
+void gpio_set_function(const uint8_t pin_number, const uint8_t function)
 {
     /* each pin use 3 bits, word used to store 10 pins */
     if (pin_number <= 53 && function <= 7)
@@ -25,7 +26,7 @@ void gpio_set_function(uint8_t pin_number, uint8_t function)
         g_gpio_address[word] = (g_gpio_address[word] & (~mask)) | value;
     }
 }
-void gpio_set(uint8_t pin_number, uint8_t value)
+void gpio_set(const uint8_t pin_number, const uint8_t value)
 {
     if (pin_number <= 53)
     {
@@ -47,7 +48,7 @@ void gpio_set(uint8_t pin_number, uint8_t value)
         g_gpio_address[word] = (1 << shift);
     }
 }
-uint8_t gpio_get(uint8_t pin_number)
+uint8_t gpio_get(const uint8_t pin_number)
 {
     if (pin_number <= 53)
     {

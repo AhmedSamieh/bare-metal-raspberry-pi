@@ -1,3 +1,11 @@
+/******************************************************************************
+ * main.c
+ *  auther  Ahmed Samieh
+ *  email   ahmed.samieh@gmail.com
+ *
+ * main.c contains the code for tasks and main program
+ ******************************************************************************/
+
 #include <stdint.h>
 #include "timer.h"
 #include "gpio.h"

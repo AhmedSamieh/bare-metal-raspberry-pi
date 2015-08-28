@@ -5,7 +5,7 @@ SOURCE     = src/
 OBJECTS    = $(patsubst %.c,%.o,$(wildcard $(SOURCE)*.c))
 TARGET     = kernel
 # arm-none-eabi-gcc --help > gcc.help
-GCC_OPTION = -O1 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -nostartfiles -g -Wall
+GCC_OPTION = -O1 -mfpu=vfp -mfloat-abi=hard -march=armv6zk -mtune=arm1176jzf-s -nostartfiles -g -Wall -Wextra -Wcast-align
 # arm-none-eabi-ld --help > ld.help
 LD_OPTION  = -N -O --relax --gc-sections --verbose
 

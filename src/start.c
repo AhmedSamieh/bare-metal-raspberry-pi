@@ -12,8 +12,8 @@
 #define TIMER_CTRL_INT_ENABLE   (1 << 5)
 #define TIMER_CTRL_ENABLE       (1 << 7)
 
-volatile uint32_t *g_interrupt_controller_address = (uint32_t *)INTERRUPT_CONTROLLER_BASE;
-volatile uint32_t *g_timer_address = (uint32_t *)TIMER_BASE;
+volatile uint32_t * const g_interrupt_controller_address = (uint32_t * const)INTERRUPT_CONTROLLER_BASE;
+volatile uint32_t * const g_timer_address = (uint32_t * const)TIMER_BASE;
 uint32_t g_task[2] = {0};
 uint32_t g_task_id = 0;
 void __attribute__((naked, section(".text.startup"))) _start(void)
@@ -54,14 +54,14 @@ void __attribute__((naked, section(".text.startup"))) _start(void)
     asm volatile ("bss_test: cmp r1, r2");
     asm volatile ("bne zero_init");
     /* Enable the timer interrupt IRQ */
-    *((volatile uint32_t *)(g_interrupt_controller_address + 6)) = TIMER_IRQ;
+    *((volatile uint32_t * const)(g_interrupt_controller_address + 6)) = TIMER_IRQ;
     /* Setup the system timer interrupt */
     /* Timer frequency = Clk/256 * 0x100 */
-    *((volatile uint32_t *)(g_timer_address + 0)) = 0x100; /* Load */
-    *((volatile uint32_t *)(g_timer_address + 2)) = TIMER_CTRL_23BIT |
-                                                    TIMER_CTRL_PRESCALE_256 |
-                                                    TIMER_CTRL_INT_ENABLE |
-                                                    TIMER_CTRL_ENABLE; /* Cotrol */
+    *((volatile uint32_t * const)(g_timer_address + 0)) = 0x100; /* Load */
+    *((volatile uint32_t * const)(g_timer_address + 2)) = TIMER_CTRL_23BIT |
+                                                          TIMER_CTRL_PRESCALE_256 |
+                                                          TIMER_CTRL_INT_ENABLE |
+                                                          TIMER_CTRL_ENABLE; /* Cotrol */
     /* Switch to System Mode - b11111 */
     asm volatile ("cps #0x1F");
     /*asm volatile ("mrs r0, cpsr");

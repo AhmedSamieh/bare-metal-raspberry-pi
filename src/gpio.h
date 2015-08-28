@@ -1,9 +1,12 @@
 /******************************************************************************
  * gpio.h
- *  by Ahmed Samieh
+ *  auther  Ahmed Samieh
+ *  email   ahmed.samieh@gmail.com
  *
  * gpio.h contains the functions for manipulation of the GPIO ports.
  ******************************************************************************/
+#ifndef GPIO_H
+#define GPIO_H
 #include <stdint.h>
 
 /* GPIO FUNCTION */
@@ -18,6 +21,7 @@
 #define GPIO_PWR    (35)
 #define GPIO_ACT    (47)
 
-void gpio_set_function(uint8_t pin_number, uint8_t function);
-void gpio_set(uint8_t pin_number, uint8_t value);
-uint8_t  gpio_get(uint8_t pin_number);
+void gpio_set_function(const uint8_t pin_number, const uint8_t function);
+void gpio_set(const uint8_t pin_number, const uint8_t value);
+uint8_t  gpio_get(const uint8_t pin_number);
+#endif // GPIO_H
